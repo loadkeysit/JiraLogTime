@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jira Time Logger</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      min-width: 320px;
+      padding: 16px;
+      background: #f8f8f8;
+      color: #111;
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+    .field {
+      margin-bottom: 10px;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 4px;
+      color: #555;
+    }
+    .field input,
+    .field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border: none;
+      border-radius: 4px;
+      background: #0052cc;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #refreshIssueButton {
+      width: auto;
+      padding: 8px 14px;
+      background: #666;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .small {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+    }
+    .entry {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-top: 10px;
+      background: white;
+    }
+    .entry strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Jira Time Logger</h1>
+  <div class="field">
+    <label>Issue</label>
+    <div id="issueText">Caricamento...</div>
+    <button id="refreshIssueButton" type="button">Aggiorna issue</button>
+  </div>
+  <div class="field">
+    <label>Campi Jira rilevati</label>
+    <div id="issueFields">Caricamento...</div>
+  </div>
+  <div class="field">
+    <label for="timeSpent">Tempo (es. 1h 30m)</label>
+    <input id="timeSpent" placeholder="Esempio: 1h 30m" />
+  </div>
+  <div class="field">
+    <label for="notes">Note</label>
+    <textarea id="notes" rows="3" placeholder="Ad esempio: aggiornamento documento esterno"></textarea>
+  </div>
+  <button id="saveButton">Salva e scarica</button>
+  <div class="small">Il log viene salvato localmente e scaricato in un file CSV.</div>
+  <div id="history"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

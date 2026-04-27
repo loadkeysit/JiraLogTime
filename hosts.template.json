@@ -1,0 +1,14 @@
+{
+  "host_permissions": [
+    "*://*.atlassian.net/*",
+    "*://*.jira.com/*",
+    "*://*.jira-server.com/*",
+    "*://*.example-jira.com/*"
+  ],
+  "content_matches": [
+    "*://*.atlassian.net/*",
+    "*://*.jira.com/*",
+    "*://*.jira-server.com/*",
+    "*://*.example-jira.com/*"
+  ]
+}
