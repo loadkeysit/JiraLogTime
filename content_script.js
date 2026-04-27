@@ -81,6 +81,49 @@ function normalizeLabel(text) {
     .trim();
 }
 
+function extractFieldValue(valueEl) {
+  if (!valueEl) {
+    return "";
+  }
+
+  const issueLink = valueEl.querySelector("a.issue-link, a[href*='/browse/']");
+  if (issueLink) {
+    const parts = [issueLink.textContent.trim()];
+    let node = issueLink.nextSibling;
+    while (node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent.trim();
+        if (text) {
+          parts.push(text);
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const text = node.innerText.trim();
+        if (text) {
+          parts.push(text);
+        }
+      }
+      node = node.nextSibling;
+    }
+    return normalizeLabel(parts.join(" "));
+  }
+
+  const rawText = valueEl.innerText || "";
+  return normalizeLabel(rawText.replace(/\b(Edit|Click to edit|Add link|Add a comment|Delete this link)\b.*$/i, ""));
+}
+
+function extractFieldLabel(row) {
+  const labelEl = row.querySelector("strong.name label, strong.name, strong > label, .field-label, label");
+  if (!labelEl) {
+    return null;
+  }
+  return normalizeLabel(labelEl.textContent || "");
+}
+
+function extractFieldValueFromRow(row) {
+  const valueEl = row.querySelector("[id$='-val'], .value, .field-value, .wrap, .value-container, .rlabs-value") || row;
+  return extractFieldValue(valueEl);
+}
+
 function extractIssueFields() {
   const fields = {};
   const addField = (key, value) => {
@@ -90,6 +133,34 @@ function extractIssueFields() {
       fields[normalizedKey] = normalizedValue;
     }
   };
+
+  const customfieldRows = Array.from(document.querySelectorAll("[id^='rowForcustomfield_']"));
+  if (customfieldRows.length) {
+    customfieldRows.forEach((row) => {
+      const key = extractFieldLabel(row);
+      if (!key) {
+        return;
+      }
+      const value = extractFieldValueFromRow(row);
+      addField(key, value);
+    });
+    return fields;
+  }
+
+  const parseListItem = (item) => {
+    const labelEl = item.querySelector("strong.name label, strong.name, strong > label, .field-label, label");
+    const valueEl = item.querySelector("[id$='-val'], .value, .field-value, .wrap, .value-container") || item;
+    if (!labelEl) {
+      return;
+    }
+    addField(labelEl.textContent, extractFieldValue(valueEl));
+  };
+
+  const customfieldItems = Array.from(document.querySelectorAll("[id^='customfield-panel-'] li.item, [id^='customfield-panel-'] li.list-item"));
+  if (customfieldItems.length) {
+    customfieldItems.forEach(parseListItem);
+    return fields;
+  }
 
   document.querySelectorAll("dt").forEach((dt) => {
     const dd = dt.nextElementSibling;
@@ -117,6 +188,28 @@ function extractIssueFields() {
   return fields;
 }
 
+function extractAssignee() {
+  const assigneeEl = document.querySelector("#assignee-val");
+  if (assigneeEl) {
+    const userSpan = assigneeEl.querySelector(".user-hover");
+    if (userSpan) {
+      return userSpan.textContent.trim();
+    }
+  }
+  return null;
+}
+
+function extractReporter() {
+  const reporterEl = document.querySelector("#reporter-val");
+  if (reporterEl) {
+    const userSpan = reporterEl.querySelector(".user-hover");
+    if (userSpan) {
+      return userSpan.textContent.trim();
+    }
+  }
+  return null;
+}
+
 function buildIssueData() {
   const url = window.location.href;
   const key = extractIssueFromUrl(url);
@@ -126,7 +219,9 @@ function buildIssueData() {
   }
 
   const fields = extractIssueFields();
-  return { key, summary, url, fields };
+  const assignee = extractAssignee();
+  const reporter = extractReporter();
+  return { key, summary, url, fields, assignee, reporter };
 }
 
 async function saveCurrentIssue() {
@@ -166,6 +261,17 @@ async function initialize() {
 
   window.addEventListener("popstate", () => saveCurrentIssue());
   window.addEventListener("hashchange", () => saveCurrentIssue());
+
+  browser.runtime.onMessage.addListener((message) => {
+    if (message && message.type === "getCurrentIssue") {
+      const currentIssue = buildIssueData();
+      if (currentIssue) {
+        browser.storage.local.set({ currentIssue });
+      }
+      return Promise.resolve(currentIssue || null);
+    }
+    return false;
+  });
 }
 
 initialize();

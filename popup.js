@@ -69,9 +69,30 @@ function renderHistory(logs) {
     .join("");
 }
 
-async function queryCurrentIssue() {
+async function getCurrentIssueFromTab() {
+  try {
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    if (!tabs.length) {
+      return null;
+    }
+    const issue = await browser.tabs.sendMessage(tabs[0].id, { type: "getCurrentIssue" });
+    if (issue) {
+      await browser.storage.local.set({ currentIssue: issue });
+    }
+    return issue;
+  } catch (error) {
+    return null;
+  }
+}
+
+async function queryCurrentIssue(forceRefresh = false) {
+  let issue = null;
+  if (forceRefresh) {
+    issue = await getCurrentIssueFromTab();
+  }
+
   const data = await browser.storage.local.get(["currentIssue", "logs"]);
-  const issue = data.currentIssue || null;
+  issue = issue || data.currentIssue || null;
   const saveButton = document.getElementById("saveButton");
   const issueText = document.getElementById("issueText");
 
@@ -109,7 +130,9 @@ async function saveLog() {
     issueUrl: issue.url,
     timeSpent,
     notes,
-    fieldsJson: JSON.stringify(issue.fields || {}),
+    assignee: issue.assignee || "",
+    reporter: issue.reporter || "",
+    fields: issue.fields || {},
   };
 
   const stored = await browser.storage.local.get("logs");
@@ -122,17 +145,20 @@ async function saveLog() {
   queryCurrentIssue();
 }
 
-function makeCsvLine(entry) {
+function makeCsvLine(entry, fieldKeys) {
   const escapeValue = (value) => `"${String(value).replace(/"/g, '""')}"`;
-  return [
+  const fixed = [
     escapeValue(entry.createdAt),
     escapeValue(entry.issueKey),
     escapeValue(entry.issueSummary),
     escapeValue(entry.timeSpent),
     escapeValue(entry.notes || ""),
-    escapeValue(entry.issueUrl),
-    escapeValue(entry.fieldsJson || "")
-  ].join(",");
+    escapeValue(entry.assignee || ""),
+    escapeValue(entry.reporter || ""),
+    escapeValue(entry.issueUrl)
+  ];
+  const fieldValues = fieldKeys.map(key => escapeValue(entry.fields[key] || ""));
+  return [...fixed, ...fieldValues].join(",");
 }
 
 async function downloadCsv(logs) {
@@ -140,8 +166,16 @@ async function downloadCsv(logs) {
     return;
   }
 
-  const header = ["Timestamp", "Issue Key", "Summary", "Time Spent", "Notes", "Issue URL", "Fields"].join(",") + "\n";
-  const rows = logs.map(makeCsvLine).join("\n") + "\n";
+  const allKeys = new Set();
+  logs.forEach(log => {
+    if (log.fields) {
+      Object.keys(log.fields).forEach(key => allKeys.add(key));
+    }
+  });
+  const fieldKeys = Array.from(allKeys).sort();
+
+  const header = ["Timestamp", "Issue Key", "Summary", "Time Spent", "Notes", "Assignee", "Reporter", "Issue URL", ...fieldKeys].join(",") + "\n";
+  const rows = logs.map(log => makeCsvLine(log, fieldKeys)).join("\n") + "\n";
   const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
 
@@ -155,7 +189,7 @@ async function downloadCsv(logs) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  queryCurrentIssue();
+  queryCurrentIssue(true);
   document.getElementById("saveButton").addEventListener("click", saveLog);
-  document.getElementById("refreshIssueButton").addEventListener("click", queryCurrentIssue);
+  document.getElementById("refreshIssueButton").addEventListener("click", () => queryCurrentIssue(true));
 });
