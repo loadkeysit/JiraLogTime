@@ -16,6 +16,7 @@ Un semplice plugin Firefox per catturare un ticket Jira aperto e salvare un log 
 3. Inserisci il tempo e le note.
 4. Clicca su `Salva` per memorizzare il log localmente nel browser.
 5. Quando vuoi scaricare il backup, clicca su `Esporta CSV`.
+6. Se vuoi svuotare tutti i log salvati, clicca su `Svuota Cache` (con conferma).
 
 Il log viene memorizzato in `browser.storage.local`, quindi resta disponibile anche dopo il riavvio del browser. Il file CSV viene generato solo su richiesta e viene salvato con un nome mensile del tipo `jira-time-log-<user>-YYYY-MM.csv`.
 

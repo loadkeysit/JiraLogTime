@@ -213,9 +213,18 @@ async function downloadCsv(logs) {
   URL.revokeObjectURL(url);
 }
 
+async function clearCache() {
+  if (!confirm("Sei sicuro di voler svuotare la cache? Tutti i log salvati verranno eliminati.")) {
+    return;
+  }
+  await browser.storage.local.remove("logs");
+  queryCurrentIssue();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   queryCurrentIssue(true);
   document.getElementById("saveButton").addEventListener("click", saveLog);
   document.getElementById("exportButton").addEventListener("click", exportLogs);
+  document.getElementById("clearCacheButton").addEventListener("click", clearCache);
   document.getElementById("refreshIssueButton").addEventListener("click", () => queryCurrentIssue(true));
 });
