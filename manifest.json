@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Jira Time Logger",
-  "version": "1.0",
+  "version": "1.2.0",
   "description": "Memorizza la pagina Jira attiva e consente di creare un log di tempo esterno in un file.",
   "permissions": [
     "storage",

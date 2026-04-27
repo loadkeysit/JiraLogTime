@@ -14,6 +14,9 @@ Un semplice plugin Firefox per catturare un ticket Jira aperto e salvare un log 
 1. Apri una pagina issue Jira valida.
 2. Apri l'estensione con l'icona di Firefox.
 3. Inserisci il tempo e le note.
-4. Clicca su `Salva e scarica` per salvare nel log e scaricare un file CSV.
+4. Clicca su `Salva` per memorizzare il log localmente nel browser.
+5. Quando vuoi scaricare il backup, clicca su `Esporta CSV`.
 
-Il file CSV viene scritto localmente nella cartella di download di Firefox. Per ora questo è il modo più semplice per memorizzare il log al di fuori di Jira.
+Il log viene memorizzato in `browser.storage.local`, quindi resta disponibile anche dopo il riavvio del browser. Il file CSV viene generato solo su richiesta e viene salvato con un nome mensile del tipo `jira-time-log-<user>-YYYY-MM.csv`.
+
+> Nota: lo storage locale è persistente, ma per sicurezza ti conviene esportare il CSV regolarmente come copia esterna.

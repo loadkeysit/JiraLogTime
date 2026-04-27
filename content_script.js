@@ -210,6 +210,20 @@ function extractReporter() {
   return null;
 }
 
+function extractCurrentUser() {
+  const userMeta = document.querySelector('meta[name="ajs-remote-user"]');
+  if (userMeta && userMeta.content) {
+    return userMeta.content.trim();
+  }
+
+  const userFullMeta = document.querySelector('meta[name="ajs-remote-user-fullname"]');
+  if (userFullMeta && userFullMeta.content) {
+    return userFullMeta.content.trim();
+  }
+
+  return null;
+}
+
 function buildIssueData() {
   const url = window.location.href;
   const key = extractIssueFromUrl(url);
@@ -221,7 +235,8 @@ function buildIssueData() {
   const fields = extractIssueFields();
   const assignee = extractAssignee();
   const reporter = extractReporter();
-  return { key, summary, url, fields, assignee, reporter };
+  const currentUser = extractCurrentUser();
+  return { key, summary, url, fields, assignee, reporter, currentUser };
 }
 
 async function saveCurrentIssue() {

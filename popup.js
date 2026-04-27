@@ -132,6 +132,7 @@ async function saveLog() {
     notes,
     assignee: issue.assignee || "",
     reporter: issue.reporter || "",
+    currentUser: issue.currentUser || "",
     fields: issue.fields || {},
   };
 
@@ -139,10 +140,30 @@ async function saveLog() {
   const logs = stored.logs || [];
   logs.push(entry);
   await browser.storage.local.set({ logs });
-  await downloadCsv(logs);
+
   document.getElementById("timeSpent").value = "";
   document.getElementById("notes").value = "";
   queryCurrentIssue();
+}
+
+async function exportLogs() {
+  const stored = await browser.storage.local.get("logs");
+  const logs = stored.logs || [];
+  if (!logs.length) {
+    alert("Nessun log disponibile da esportare.");
+    return;
+  }
+
+  await downloadCsv(logs);
+}
+
+function sanitizeFilename(value) {
+  return String(value)
+    .trim()
+    .replace(/[^a-zA-Z0-9-_\.]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
 }
 
 function makeCsvLine(entry, fieldKeys) {
@@ -178,10 +199,14 @@ async function downloadCsv(logs) {
   const rows = logs.map(log => makeCsvLine(log, fieldKeys)).join("\n") + "\n";
   const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
+  const firstLog = logs[0] || {};
+  const userPart = sanitizeFilename(firstLog.currentUser || firstLog.assignee || firstLog.reporter || "user");
+  const monthPart = new Date().toISOString().slice(0, 7);
+  const filename = `jira-time-log-${userPart}-${monthPart}.csv`;
 
   await browser.downloads.download({
     url,
-    filename: "jira-time-log.csv",
+    filename,
     conflictAction: "overwrite",
     saveAs: false
   });
@@ -191,5 +216,6 @@ async function downloadCsv(logs) {
 document.addEventListener("DOMContentLoaded", () => {
   queryCurrentIssue(true);
   document.getElementById("saveButton").addEventListener("click", saveLog);
+  document.getElementById("exportButton").addEventListener("click", exportLogs);
   document.getElementById("refreshIssueButton").addEventListener("click", () => queryCurrentIssue(true));
 });

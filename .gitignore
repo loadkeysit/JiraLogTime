@@ -1,1 +1,11 @@
 hosts.json
+# web-ext artifacts
+web-ext-artifacts/
+.amo-upload-uuid
+
+# node (se lo userai)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
