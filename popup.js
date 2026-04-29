@@ -204,13 +204,36 @@ async function downloadCsv(logs) {
   const monthPart = new Date().toISOString().slice(0, 7);
   const filename = `jira-time-log-${userPart}-${monthPart}.csv`;
 
-  await browser.downloads.download({
-    url,
-    filename,
-    conflictAction: "overwrite",
-    saveAs: false
-  });
-  URL.revokeObjectURL(url);
+  try {
+    // Method 1: Try standard link download (most reliable for popup)
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+    alert(`CSV scaricato: ${filename}`);
+  } catch (error) {
+    console.error("Link download failed:", error);
+    try {
+      // Method 2: Try browser.downloads API
+      await browser.downloads.download({
+        url,
+        filename,
+        conflictAction: "uniquify",
+        saveAs: false
+      });
+      alert(`CSV scaricato: ${filename}`);
+    } catch (error2) {
+      console.error("browser.downloads also failed:", error2);
+      alert(`Errore nel download. Verifica i permessi dell'estensione.`);
+      URL.revokeObjectURL(url);
+    }
+  }
 }
 
 async function clearCache() {
